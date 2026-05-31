@@ -1,7 +1,9 @@
 import UIKit
 
-class SupplementaryView: UICollectionReusableView {
-    let titleLabel = UILabel()
+final class SupplementaryView: UICollectionReusableView {
+    static let headerIdentifier = "header"
+    
+    private let titleLabel = UILabel()
     
     override init(frame: CGRect){
         super.init(frame: frame)
@@ -17,5 +19,9 @@ class SupplementaryView: UICollectionReusableView {
     
     required init?(coder: NSCoder){
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    func configure(title: String){
+        titleLabel.text = title
     }
 }

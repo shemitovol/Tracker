@@ -1,12 +1,14 @@
 import UIKit
 
-class TrackersCollectionViewCell: UICollectionViewCell {
-    let topContainer = UIView()
-    let emojiLabel = UILabel()
-    let titleLabel = UILabel()
+final class TrackersCollectionViewCell: UICollectionViewCell {
+    private let topContainer = UIView()
+    private let emojiLabel = UILabel()
+    private let titleLabel = UILabel()
 
-    let daysLabel = UILabel()
-    let recordButton = UIButton()
+    private let daysLabel = UILabel()
+    private let recordButton = UIButton()
+    
+    static let cellIdentifier = "cell"
     
     var onRecordButtonTapped: (() -> Void)?
     
@@ -15,7 +17,12 @@ class TrackersCollectionViewCell: UICollectionViewCell {
         
         setupViews()
         setupConstraints()
-        setupReadyButton()
+        setupRecordButton()
+    }
+    
+    override func prepareForReuse(){
+        super.prepareForReuse()
+        onRecordButtonTapped = nil
     }
     
     required init?(coder: NSCoder){
@@ -67,7 +74,7 @@ class TrackersCollectionViewCell: UICollectionViewCell {
             daysLabel.topAnchor.constraint(equalTo: topContainer.bottomAnchor, constant: 16),
             daysLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
             daysLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24),
-            daysLabel.trailingAnchor.constraint(equalTo: recordButton.leadingAnchor, constant: 8),
+            daysLabel.trailingAnchor.constraint(equalTo: recordButton.leadingAnchor, constant: -8),
             recordButton.widthAnchor.constraint(equalToConstant: 34),
             recordButton.heightAnchor.constraint(equalToConstant: 34),
             recordButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
@@ -75,7 +82,7 @@ class TrackersCollectionViewCell: UICollectionViewCell {
         ])
     }
     
-    private func setupReadyButton() {
+    private func setupRecordButton() {
         recordButton.setImage(
             UIImage(resource: .readyPlusButton),
             for: .normal
@@ -85,7 +92,6 @@ class TrackersCollectionViewCell: UICollectionViewCell {
             action: #selector(recordTapped),
             for: .touchUpInside
         )
-        recordButton.tintColor = topContainer.backgroundColor
     }
     
     @objc
@@ -93,11 +99,32 @@ class TrackersCollectionViewCell: UICollectionViewCell {
         onRecordButtonTapped?()
     }
     
-    func configure(isCompleted: Bool, completeDays: Int) {
-        daysLabel.text = "\(completeDays) дней"
-        
+    func configure(tracker: Tracker, isCompleted: Bool, completeDays: Int) {
+        daysLabel.text = daysText(completeDays)
+        topContainer.backgroundColor = tracker.color
+        recordButton.tintColor = tracker.color
+        emojiLabel.text = tracker.emoji
+        titleLabel.text = tracker.name
         let image = isCompleted ? UIImage(resource: .doneButton) : UIImage(resource: .readyPlusButton)
         recordButton.setImage(image, for: .normal)
+    }
+    
+    private func daysText(_ count: Int) -> String {
+        let lastOne = count % 10
+        let lastTwo = count % 100
+        
+        if lastTwo >= 11 && lastTwo <= 14 {
+            return "\(count) дней"
+        }
+        
+        switch lastOne {
+        case 1:
+            return "\(count) день"
+        case 2...4:
+            return "\(count) дня"
+        default:
+            return "\(count) дней"
+        }
     }
 }
 
