@@ -6,7 +6,9 @@ class TrackersCollectionViewCell: UICollectionViewCell {
     let titleLabel = UILabel()
 
     let daysLabel = UILabel()
-    let readyButton = UIButton()
+    let recordButton = UIButton()
+    
+    var onRecordButtonTapped: (() -> Void)?
     
     override init (frame: CGRect){
         super.init(frame: frame)
@@ -24,19 +26,27 @@ class TrackersCollectionViewCell: UICollectionViewCell {
         contentView.addSubview(topContainer)
         topContainer.translatesAutoresizingMaskIntoConstraints = false
         topContainer.layer.cornerRadius = 16
-        topContainer.backgroundColor = .green
         
         topContainer.addSubview(emojiLabel)
+        emojiLabel.font = .systemFont(ofSize: 16, weight: .medium)
+        emojiLabel.backgroundColor = UIColor(resource: .ypWhiteDay).withAlphaComponent(0.3)
+        emojiLabel.layer.cornerRadius = 12
+        emojiLabel.clipsToBounds = true
+        emojiLabel.textAlignment = .center
         emojiLabel.translatesAutoresizingMaskIntoConstraints = false
         
         topContainer.addSubview(titleLabel)
+        titleLabel.font = .systemFont(ofSize: 12, weight: .medium)
+        titleLabel.textColor = UIColor(resource: .ypWhiteDay)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
               
         contentView.addSubview(daysLabel)
+        daysLabel.font = .systemFont(ofSize: 12, weight: .medium)
+        daysLabel.textColor = UIColor(resource: .ypBlackDay)
         daysLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        contentView.addSubview(readyButton)
-        readyButton.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(recordButton)
+        recordButton.translatesAutoresizingMaskIntoConstraints = false
     }
     
     private func setupConstraints() {
@@ -47,6 +57,8 @@ class TrackersCollectionViewCell: UICollectionViewCell {
             
             emojiLabel.topAnchor.constraint(equalTo: topContainer.topAnchor, constant: 12),
             emojiLabel.leadingAnchor.constraint(equalTo: topContainer.leadingAnchor, constant: 12),
+            emojiLabel.widthAnchor.constraint(equalToConstant: 24),
+            emojiLabel.heightAnchor.constraint(equalToConstant: 24),
             
             titleLabel.leadingAnchor.constraint(equalTo: topContainer.leadingAnchor, constant: 12),
             titleLabel.trailingAnchor.constraint(equalTo: topContainer.trailingAnchor, constant: -12),
@@ -55,30 +67,37 @@ class TrackersCollectionViewCell: UICollectionViewCell {
             daysLabel.topAnchor.constraint(equalTo: topContainer.bottomAnchor, constant: 16),
             daysLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
             daysLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24),
-            daysLabel.trailingAnchor.constraint(equalTo: readyButton.leadingAnchor, constant: 8),
-            readyButton.widthAnchor.constraint(equalToConstant: 34),
-            readyButton.heightAnchor.constraint(equalToConstant: 34),
-            readyButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
-            readyButton.centerYAnchor.constraint(equalTo: daysLabel.centerYAnchor)
+            daysLabel.trailingAnchor.constraint(equalTo: recordButton.leadingAnchor, constant: 8),
+            recordButton.widthAnchor.constraint(equalToConstant: 34),
+            recordButton.heightAnchor.constraint(equalToConstant: 34),
+            recordButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
+            recordButton.centerYAnchor.constraint(equalTo: daysLabel.centerYAnchor)
         ])
     }
     
     private func setupReadyButton() {
-        readyButton.setImage(
+        recordButton.setImage(
             UIImage(resource: .readyPlusButton),
             for: .normal
         )
-        readyButton.addTarget(
+        recordButton.addTarget(
             self,
-            action: #selector(readyTapped),
+            action: #selector(recordTapped),
             for: .touchUpInside
         )
-        readyButton.tintColor = topContainer.backgroundColor
+        recordButton.tintColor = topContainer.backgroundColor
     }
     
     @objc
-    private func readyTapped (){
-        print("ready tapped")
+    private func recordTapped (){
+        onRecordButtonTapped?()
+    }
+    
+    func configure(isCompleted: Bool, completeDays: Int) {
+        daysLabel.text = "\(completeDays) дней"
+        
+        let image = isCompleted ? UIImage(resource: .doneButton) : UIImage(resource: .readyPlusButton)
+        recordButton.setImage(image, for: .normal)
     }
 }
 
