@@ -101,7 +101,7 @@ final class TrackersViewController: UIViewController {
         view.addSubview(collectionView)
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.register(TrackersCollectionViewCell.self, forCellWithReuseIdentifier: TrackersCollectionViewCell.cellIdentifier)
-        collectionView.register(SupplementaryView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: SupplementaryView.headerIdentifier)
+        collectionView.register(TrackersSupplementaryView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: TrackersSupplementaryView.headerIdentifier)
         collectionView.dataSource = self
         collectionView.delegate = self
         collectionView.contentInset.top = 24
@@ -131,7 +131,8 @@ final class TrackersViewController: UIViewController {
     
     @objc
     private func plusTapped() {
-        print("addTracker")
+        let createTrackerVC = CreateTrackerViewController()
+        present(createTrackerVC, animated: true)
     }
     
     private func setupDatePicker (){
@@ -372,9 +373,9 @@ extension TrackersViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         guard let header = collectionView.dequeueReusableSupplementaryView(
             ofKind: kind,
-            withReuseIdentifier: SupplementaryView.headerIdentifier,
+            withReuseIdentifier: TrackersSupplementaryView.headerIdentifier,
             for: indexPath
-        ) as? SupplementaryView else {
+        ) as? TrackersSupplementaryView else {
             return UICollectionReusableView()
         }
         

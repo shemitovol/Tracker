@@ -1,6 +1,6 @@
 import UIKit
 
-final class SupplementaryView: UICollectionReusableView {
+final class TrackersSupplementaryView: UICollectionReusableView {
     static let headerIdentifier = "header"
     
     private let titleLabel = UILabel()
