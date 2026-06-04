@@ -20,68 +20,6 @@ final class TrackersViewController: UIViewController {
         setupViews()
         setupConstraints()
         view.backgroundColor = UIColor(resource: .ypWhiteDay)
-        categories = [
-            TrackerCategory(
-                title: "Важное",
-                trackers: [
-                    Tracker(
-                        id: UUID(),
-                        name: "Бег",
-                        color: .colorSelection1,
-                        emoji: "🏃",
-                        schedule: [.monday, .wednesday, .friday]
-                    ),
-
-                    Tracker(
-                        id: UUID(),
-                        name: "Книга",
-                        color: .colorSelection2,
-                        emoji: "📚",
-                        schedule: [.friday, .sunday]
-                    )
-                ]
-            ),
-            TrackerCategory(
-                title: "Вторая секция",
-                trackers: [
-                    Tracker(
-                        id: UUID(),
-                        name: "Поливка растений",
-                        color: .colorSelection3,
-                        emoji: "🌺",
-                        schedule: [.monday, .wednesday, .friday]
-                    ),
-
-                    Tracker(
-                        id: UUID(),
-                        name: "Спортзал",
-                        color: .colorSelection4,
-                        emoji: "💪",
-                        schedule: [.friday, .sunday]
-                    )
-                ]
-            ),
-            TrackerCategory(
-                title: "Третья секция",
-                trackers: [
-                    Tracker(
-                        id: UUID(),
-                        name: "Кодинг",
-                        color: .colorSelection5,
-                        emoji: "💻",
-                        schedule: [.monday, .wednesday, .friday]
-                    ),
-
-                    Tracker(
-                        id: UUID(),
-                        name: "Игры",
-                        color: .colorSelection6,
-                        emoji: "🎮",
-                        schedule: [.friday, .sunday]
-                    )
-                ]
-            )
-        ]
         updateUI()
     }
 
@@ -132,6 +70,13 @@ final class TrackersViewController: UIViewController {
     @objc
     private func plusTapped() {
         let createTrackerVC = CreateTrackerViewController()
+        
+        createTrackerVC.onTrackerCreated = { [weak self] category in
+            guard let self else { return }
+            
+            self.categories.append(category)
+            self.updateUI()
+        }
         present(createTrackerVC, animated: true)
     }
     

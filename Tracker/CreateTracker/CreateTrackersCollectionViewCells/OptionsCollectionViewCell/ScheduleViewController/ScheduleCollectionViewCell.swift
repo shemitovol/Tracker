@@ -1,12 +1,12 @@
 import UIKit
 
-final class OptionsCollectionViewCell: UICollectionViewCell {
+final class ScheduleCollectionViewCell: UICollectionViewCell {
     private let titleLabel = UILabel()
-    private let valueLabel = UILabel()
-    private let chevronImage = UIImageView()
+    private let switchControl = UISwitch()
     private let dividerView = UIView()
+    var onSwitchChanged: ((Bool) -> Void)?
     
-    static let cellIdentifier = "optionsCell"
+    static let cellIdentifier = "scheduleCell"
     
     override init (frame: CGRect){
         super.init(frame: frame)
@@ -15,12 +15,17 @@ final class OptionsCollectionViewCell: UICollectionViewCell {
         setupViews()
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        onSwitchChanged = nil
+    }
+    
     required init?(coder: NSCoder){
         fatalError("init(coder:) has not been implemented")
     }
     
     private func addSubviews() {
-        contentView.addSubview(chevronImage)
+        contentView.addSubview(switchControl)
         contentView.addSubview(titleLabel)
         contentView.addSubview(dividerView)
     }
@@ -28,13 +33,15 @@ final class OptionsCollectionViewCell: UICollectionViewCell {
     private func setupViews() {
         contentView.backgroundColor = UIColor(resource: .ypBackgroundDay)
         
-        chevronImage.translatesAutoresizingMaskIntoConstraints = false
-        chevronImage.image = UIImage(resource: .chevron)
+        switchControl.translatesAutoresizingMaskIntoConstraints = false
+        switchControl.addTarget(
+            self,
+            action: #selector(switchValueChanged),
+            for: .valueChanged
+        )
         NSLayoutConstraint.activate ([
-            chevronImage.heightAnchor.constraint(equalToConstant: 24),
-            chevronImage.widthAnchor.constraint(equalToConstant: 24),
-            chevronImage.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            chevronImage.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
+            switchControl.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            switchControl.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
         ])
         
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -43,7 +50,7 @@ final class OptionsCollectionViewCell: UICollectionViewCell {
         NSLayoutConstraint.activate ([
             titleLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            titleLabel.trailingAnchor.constraint(equalTo: chevronImage.leadingAnchor, constant: -1)
+            titleLabel.trailingAnchor.constraint(equalTo: switchControl.leadingAnchor, constant: -16)
         ])
         
         dividerView.translatesAutoresizingMaskIntoConstraints = false
@@ -56,9 +63,14 @@ final class OptionsCollectionViewCell: UICollectionViewCell {
         ])
     }
     
-    func configure (title: String, isFirst: Bool, isLast: Bool) {
+    @objc
+    private func switchValueChanged() {
+        onSwitchChanged?(switchControl.isOn)
+    }
+    
+    func configure (title: String, isSelected: Bool, isFirst: Bool, isLast: Bool) {
         titleLabel.text = title
-        
+        switchControl.isOn = isSelected
         layer.masksToBounds = true
         layer.cornerRadius = 16
         
@@ -86,4 +98,3 @@ final class OptionsCollectionViewCell: UICollectionViewCell {
         dividerView.isHidden = isLast
     }
 }
-

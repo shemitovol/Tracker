@@ -4,9 +4,8 @@ final class ScheduleViewController: UIViewController {
     private let titleLabel = UILabel()
     private let readyButton = UIButton()
     private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
-    enum ScheduleSections: Int, CaseIterable {
-        case weekDays
-    }
+    var selectedDays: Set<WeekDay> = []
+    var onScheduleSelected: (([WeekDay]) -> Void)?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -65,7 +64,9 @@ final class ScheduleViewController: UIViewController {
     
     @objc
     private func readyTapped() {
-        print("readyTapped")
+        let sortedDays = selectedDays.sorted { $0.order < $1.order }
+        onScheduleSelected?(sortedDays)
+        dismiss(animated: true)
     }
     
     private func setupCollectionView() {
@@ -97,7 +98,16 @@ extension ScheduleViewController: UICollectionViewDataSource {
         let day = WeekDay.allCases[indexPath.item]
         let lastIndex = WeekDay.allCases.count - 1
         
-        cell.configure(title: day.rawValue, isSelected: false, isFirst: indexPath.item == 0, isLast: indexPath.item == lastIndex)
+        cell.configure(title: day.rawValue, isSelected: selectedDays.contains(day), isFirst: indexPath.item == 0, isLast: indexPath.item == lastIndex)
+        cell.onSwitchChanged = { [weak self] isOn in
+            guard let self else {return}
+            
+            if isOn {
+                self.selectedDays.insert(day)
+            } else {
+                self.selectedDays.remove(day)
+            }
+        }
         return cell
     }
 }

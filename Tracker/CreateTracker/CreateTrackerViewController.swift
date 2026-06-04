@@ -11,11 +11,37 @@ final class CreateTrackerViewController: UIViewController {
         "Категория",
         "Расписание"
     ]
+    private let trackerColors: [UIColor] = [
+        UIColor(resource: .colorSelection1),
+        UIColor(resource: .colorSelection2),
+        UIColor(resource: .colorSelection3),
+        UIColor(resource: .colorSelection4),
+        UIColor(resource: .colorSelection5),
+        UIColor(resource: .colorSelection6),
+        UIColor(resource: .colorSelection7),
+        UIColor(resource: .colorSelection8),
+        UIColor(resource: .colorSelection9),
+        UIColor(resource: .colorSelection10),
+        UIColor(resource: .colorSelection11),
+        UIColor(resource: .colorSelection12),
+        UIColor(resource: .colorSelection13),
+        UIColor(resource: .colorSelection14),
+        UIColor(resource: .colorSelection15),
+        UIColor(resource: .colorSelection16),
+        UIColor(resource: .colorSelection17),
+        UIColor(resource: .colorSelection18)
+    ]
+    private var trackerName = ""
+    private var isNameWarningShow = false
+    private var selectedSchedule: [WeekDay] = []
+    var onTrackerCreated: ((TrackerCategory) -> Void)?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         addSubviews()
         setupViews()
+        updateCreateButton()
         view.backgroundColor = UIColor(resource: .ypWhiteDay)
     }
     
@@ -103,12 +129,38 @@ final class CreateTrackerViewController: UIViewController {
 
     @objc
     private func cancelTapped() {
-        print("cancelTapped")
+        dismiss(animated: true)
     }
     
     @objc
     private func createTapped() {
-        print("createTapped")
+        guard
+            !trackerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            !selectedSchedule.isEmpty
+        else { return }
+        
+        let tracker = Tracker(
+            id: UUID(),
+            name: trackerName,
+            color: trackerColors.randomElement() ?? UIColor(resource: .colorSelection1),
+            emoji: "⭐️",
+            schedule: selectedSchedule
+        )
+        
+        let category = TrackerCategory(
+            title: "Новая категория",
+            trackers: [tracker]
+        )
+        
+        onTrackerCreated?(category)
+        dismiss(animated: true)
+    }
+    
+    private func updateCreateButton() {
+        let isEnabled = !selectedSchedule.isEmpty && !trackerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        
+        createButton.isEnabled = isEnabled
+        createButton.backgroundColor = isEnabled ? UIColor(resource: .ypBlackDay) : UIColor(resource: .ypGray)
     }
     
     private func openCategory() {
@@ -117,7 +169,50 @@ final class CreateTrackerViewController: UIViewController {
     
     private func openSchedule() {
         let scheduleVC = ScheduleViewController()
+        scheduleVC.selectedDays = Set(selectedSchedule)
+        
+        scheduleVC.onScheduleSelected = { [weak self] days in
+            guard let self else {return}
+            self.selectedSchedule = days
+            self.updateCreateButton()
+            self.collectionView.reloadData()
+        }
+        
         present(scheduleVC, animated: true)
+    }
+    
+    private func scheduleText() -> String {
+        let sortedDays = selectedSchedule.sorted { $0.order < $1.order }
+        let weekdays: Set<WeekDay> = [
+            .monday,
+            .tuesday,
+            .wednesday,
+            .thursday,
+            .friday
+        ]
+        
+        let weekends: Set<WeekDay> = [
+            .saturday,
+            .sunday
+        ]
+        
+        let selectedSet = Set(sortedDays)
+        
+        if selectedSet.count == 7 {
+            return "Каждый день"
+        }
+        
+        if selectedSet == weekdays {
+            return "Будни"
+        }
+        
+        if selectedSet == weekends {
+            return "Выходные"
+        }
+        
+        return sortedDays
+            .map {$0.shortName}
+            .joined(separator: ", ")
     }
 }
 
@@ -151,6 +246,19 @@ extension CreateTrackerViewController: UICollectionViewDataSource {
                 for: indexPath) as? NameCollectionViewCell else {
                 return UICollectionViewCell()
             }
+            
+            cell.onTextChanged = { [weak self] text in
+                self?.trackerName = text
+                self?.updateCreateButton()
+            }
+            cell.onWarningLabelChanged = { [weak self] isWarning in
+                guard let self else {return}
+                self.isNameWarningShow = isWarning
+                UIView.performWithoutAnimation{
+                    self.collectionView.performBatchUpdates(nil)
+                }
+            }
+            
             return cell
         case .options:
             guard let cell = collectionView.dequeueReusableCell(
@@ -161,8 +269,14 @@ extension CreateTrackerViewController: UICollectionViewDataSource {
             
             let item = optionTitles[indexPath.item]
             let lastIndex = optionTitles.count - 1
+            let value: String?
             
-            cell.configure(title: item, isFirst: indexPath.item == 0, isLast: indexPath.item == lastIndex)
+            if indexPath.item == 0 {
+                value = "Новая категория"
+            } else {
+                value = selectedSchedule.isEmpty ? nil : scheduleText()
+            }
+            cell.configure(title: item, value: value, isFirst: indexPath.item == 0, isLast: indexPath.item == lastIndex)
             return cell
         }
     }
@@ -195,7 +309,8 @@ extension CreateTrackerViewController: UICollectionViewDelegateFlowLayout {
         
         switch section {
         case .name:
-            return CGSize(width: collectionView.bounds.width - 32, height: 75)
+            let height: CGFloat = isNameWarningShow ? 113 : 75
+            return CGSize(width: collectionView.bounds.width - 32, height: height)
         case .options:
             return CGSize(width: collectionView.bounds.width - 32, height: 75)
         }
@@ -204,7 +319,7 @@ extension CreateTrackerViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
         
         if section == Sections.options.rawValue {
-            return UIEdgeInsets(top: 24, left: 0, bottom: 0, right: 0)
+            return UIEdgeInsets(top: 24, left: 16, bottom: 0, right: 16)
         }
         
         return UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
