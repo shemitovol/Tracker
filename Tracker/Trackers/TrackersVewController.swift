@@ -5,6 +5,7 @@ final class TrackersViewController: UIViewController {
     private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
     private let addTrackerButton = UIButton()
     private let trackersMainLabel = UILabel()
+    private let placeholder = UIView()
     private let mockLabel = UILabel()
     private let mockImage = UIImageView()
     private let searchBar = UISearchBar()
@@ -29,9 +30,8 @@ final class TrackersViewController: UIViewController {
         setupCollectionView()
         setupTrackersMainLabel()
         setupAddTrackerButton()
+        setupPlaceholder()
         setupDatePicker()
-        setupMockImage()
-        setupMockLabel()
         setupSearchBar()
     }
     
@@ -101,25 +101,33 @@ final class TrackersViewController: UIViewController {
         updateUI()
     }
     
-    private func setupMockImage() {
-        mockImage.translatesAutoresizingMaskIntoConstraints = false
-        mockImage.image = UIImage(resource: .starForMiss)
-        view.addSubview(mockImage)
+    private func setupPlaceholder() {
+        view.addSubview(placeholder)
+        placeholder.addSubview(mockImage)
+        placeholder.addSubview(mockLabel)
+        placeholder.translatesAutoresizingMaskIntoConstraints = false
     }
     
     private func setupMockLabel() {
-        mockLabel.translatesAutoresizingMaskIntoConstraints = false
-        mockLabel.text = "Что будем отслеживать?"
         mockLabel.font = .systemFont(ofSize: 12, weight: .medium)
         mockLabel.textAlignment = .center
-        view.addSubview(mockLabel)
     }
     
     private func updatePlaceholder(){
+        let isSearching = !(searchBar.text?.trimmingCharacters(in: .whitespaces).isEmpty ?? true)
         let isEmpty = visibleCategories.isEmpty
+       
+        placeholder.isHidden = !isEmpty
         
-        mockImage.isHidden = !isEmpty
-        mockLabel.isHidden = !isEmpty
+        if isSearching {
+            mockImage.image = UIImage(resource: .missSearch)
+            mockLabel.text = "Ничего не найдено"
+            setupMockLabel()
+        } else {
+            mockImage.image = UIImage(resource: .starForMiss)
+            mockLabel.text = "Что будем отслеживать?"
+            setupMockLabel()
+        }
         
         collectionView.isHidden = isEmpty
     }
@@ -136,6 +144,7 @@ final class TrackersViewController: UIViewController {
     private func setupConstraints() {
         collectionViewConstraints()
         trackersMainLabelConstraints()
+        placeholderConstraints()
         mockImageConstraints()
         mockLabelConstraints()
         searchBarConstraint()
@@ -157,17 +166,28 @@ final class TrackersViewController: UIViewController {
         ])
     }
     
-    private func mockImageConstraints() {
+    private func placeholderConstraints(){
         NSLayoutConstraint.activate([
-            mockImage.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
-            mockImage.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor)
+            placeholder.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+            placeholder.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
+            placeholder.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            placeholder.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
+        ])
+    }
+    
+    private func mockImageConstraints() {
+        mockImage.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            mockImage.centerXAnchor.constraint(equalTo: placeholder.centerXAnchor),
+            mockImage.centerYAnchor.constraint(equalTo: placeholder.centerYAnchor)
         ])
     }
     
     private func mockLabelConstraints() {
+        mockLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            mockLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
-            mockLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            mockLabel.leadingAnchor.constraint(equalTo: placeholder.leadingAnchor, constant: 16),
+            mockLabel.trailingAnchor.constraint(equalTo: placeholder.trailingAnchor, constant: -16),
             mockLabel.topAnchor.constraint(equalTo: mockImage.bottomAnchor, constant: 8)
         ])
     }
