@@ -1,38 +1,67 @@
 import UIKit
 
 final class TrackersViewController: UIViewController {
-    
+    //MARK: - UI Elements
     private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
     private let addTrackerButton = UIButton()
-    private let trackersMainLabel = UILabel()
     private let placeholder = UIView()
     private let mockLabel = UILabel()
     private let mockImage = UIImageView()
-    private let searchBar = UISearchBar()
     private let datePicker = UIDatePicker()
     
+    //MARK: - Private Properties
     private var categories: [TrackerCategory] = []
     private var visibleCategories: [TrackerCategory] = []
     private var completedTrackers: [TrackerRecord] = []
     private var searchText = ""
     
+    //MARK: - Initialization
     override func viewDidLoad() {
         super.viewDidLoad()
         setupViews()
         setupConstraints()
+        setupNavBar()
         view.backgroundColor = UIColor(resource: .ypWhiteDay)
         updateUI()
     }
 
-    //MARK: - Setup Views
+    //MARK: - Setup UI Private Methods
+    private func setupNavBar() {
+        title = "Трекеры"
+
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.largeTitleDisplayMode = .always
+
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.shadowColor = .clear
+        appearance.largeTitleTextAttributes = [
+            .font: UIFont.systemFont(ofSize: 34, weight: .bold)
+        ]
+
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.compactAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+
+        let searchController = UISearchController(searchResultsController: nil)
+        searchController.searchBar.placeholder = "Поиск"
+        searchController.searchBar.searchTextField.clearButtonMode = .never
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.hidesNavigationBarDuringPresentation = false
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = false
+
+        definesPresentationContext = true
+        searchController.searchResultsUpdater = self
+        searchController.delegate = self
+    }
     
     private func setupViews() {
         setupCollectionView()
-        setupTrackersMainLabel()
         setupAddTrackerButton()
+        setupMockLabel()
         setupPlaceholder()
         setupDatePicker()
-        setupSearchBar()
     }
     
     private func setupCollectionView(){
@@ -45,13 +74,6 @@ final class TrackersViewController: UIViewController {
         collectionView.contentInset.top = 24
     }
     
-    private func setupTrackersMainLabel() {
-        trackersMainLabel.translatesAutoresizingMaskIntoConstraints = false
-        trackersMainLabel.text = "Трекеры"
-        trackersMainLabel.font = .systemFont(ofSize: 34, weight: .bold)
-        view.addSubview(trackersMainLabel)
-    }
-    
     private func setupAddTrackerButton() {
         addTrackerButton.setImage(
             UIImage(resource: .addPlusButton),
@@ -62,9 +84,13 @@ final class TrackersViewController: UIViewController {
             action: #selector(plusTapped),
             for: .touchUpInside
         )
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            customView: addTrackerButton
-        )
+        let container = UIView(frame: CGRect(x: -10, y: 0, width: 42, height: 42))
+        addTrackerButton.tintColor = UIColor(resource: .ypBlackDay)
+        addTrackerButton.frame = CGRect(x: 0, y: 0, width: 42, height: 42)
+        addTrackerButton.center = container.center
+        container.addSubview(addTrackerButton)
+
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: container)
     }
     
     @objc
@@ -114,7 +140,7 @@ final class TrackersViewController: UIViewController {
     }
     
     private func updatePlaceholder(){
-        let isSearching = !(searchBar.text?.trimmingCharacters(in: .whitespaces).isEmpty ?? true)
+        let isSearching = !searchText.trimmingCharacters(in: .whitespaces).isEmpty
         let isEmpty = visibleCategories.isEmpty
        
         placeholder.isHidden = !isEmpty
@@ -122,47 +148,29 @@ final class TrackersViewController: UIViewController {
         if isSearching {
             mockImage.image = UIImage(resource: .missSearch)
             mockLabel.text = "Ничего не найдено"
-            setupMockLabel()
         } else {
             mockImage.image = UIImage(resource: .starForMiss)
             mockLabel.text = "Что будем отслеживать?"
-            setupMockLabel()
         }
         
         collectionView.isHidden = isEmpty
     }
     
-    private func setupSearchBar(){
-        searchBar.translatesAutoresizingMaskIntoConstraints = false
-        searchBar.placeholder = "Поиск"
-        view.addSubview(searchBar)
-        searchBar.delegate = self
-    }
-    
-    //MARK: - Setup Constraints
+    //MARK: - Setup UI Constraints Private Methods
     
     private func setupConstraints() {
         collectionViewConstraints()
-        trackersMainLabelConstraints()
         placeholderConstraints()
         mockImageConstraints()
         mockLabelConstraints()
-        searchBarConstraint()
     }
     
     private func collectionViewConstraints(){
         NSLayoutConstraint.activate([
             collectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
             collectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
-            collectionView.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
+            collectionView.topAnchor.constraint(equalTo: view.topAnchor),
             collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
-        ])
-    }
-    
-    private func trackersMainLabelConstraints() {
-        NSLayoutConstraint.activate([
-            trackersMainLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
-            trackersMainLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor)
         ])
     }
     
@@ -179,7 +187,9 @@ final class TrackersViewController: UIViewController {
         mockImage.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             mockImage.centerXAnchor.constraint(equalTo: placeholder.centerXAnchor),
-            mockImage.centerYAnchor.constraint(equalTo: placeholder.centerYAnchor)
+            mockImage.centerYAnchor.constraint(equalTo: placeholder.centerYAnchor),
+            mockImage.widthAnchor.constraint(equalToConstant: 80),
+            mockImage.heightAnchor.constraint(equalToConstant: 80)
         ])
     }
     
@@ -192,15 +202,7 @@ final class TrackersViewController: UIViewController {
         ])
     }
     
-    private func searchBarConstraint(){
-        NSLayoutConstraint.activate ([
-            searchBar.topAnchor.constraint(equalTo: trackersMainLabel.bottomAnchor),
-            searchBar.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
-            searchBar.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16)
-        ])
-    }
-    
-    //MARK: - Lifecycle
+    //MARK: - Lifecycle Private Methods
     
     private func isTrackerCompleted(trackerID: UUID, date: Date) -> Bool {
         completedTrackers.contains {
@@ -238,8 +240,6 @@ final class TrackersViewController: UIViewController {
         updateVisibleCategories()
         updatePlaceholder()
     }
-    
-    //MARK: - Visible Category
     
     private func weekDay(for date: Date) -> WeekDay {
         let weekday = Calendar.current.component(.weekday, from: date)
@@ -284,6 +284,7 @@ final class TrackersViewController: UIViewController {
     }
 }
 
+//MARK: - UICollectionViewDataSource
 extension TrackersViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         visibleCategories[section].trackers.count
@@ -315,7 +316,14 @@ extension TrackersViewController: UICollectionViewDataSource {
                 self.completeTracker(tracker)
             }
             
-            self.collectionView.reloadItems(at: [indexPath])
+            let newCompleted = self.isTrackerCompleted(trackerID: tracker.id, date: self.datePicker.date)
+            let newCount = self.completedTrackers.filter {
+                $0.trackerID == tracker.id
+            }.count
+            
+            if let cell = self.collectionView.cellForItem(at: indexPath) as? TrackersCollectionViewCell {
+                cell.updateCompletionState(isCompleted: newCompleted, completedDays: newCount)
+            }
         }
         
         let completed = isTrackerCompleted(
@@ -350,6 +358,7 @@ extension TrackersViewController: UICollectionViewDataSource {
     }
 }
 
+//MARK: - UICollectionViewDelegateFlowLayout
 extension TrackersViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         return CGSize(width: (collectionView.bounds.width - 9)/2, height: 148)
@@ -368,9 +377,19 @@ extension TrackersViewController: UICollectionViewDelegateFlowLayout {
     }
 }
 
-extension TrackersViewController: UISearchBarDelegate {
-    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String){
-        self.searchText = searchText
+//MARK: - UISearchResultsUpdating
+extension TrackersViewController: UISearchResultsUpdating {
+    func updateSearchResults(for searchController: UISearchController) {
+        let text = searchController.searchBar.text ?? ""
+        searchText = text
+        updateUI()
+    }
+}
+
+//MARK: - UISearchControllerDelegate
+extension TrackersViewController: UISearchControllerDelegate {
+    func willDismissSearchController(_ searchController: UISearchController) {
+        searchText = ""
         updateUI()
     }
 }

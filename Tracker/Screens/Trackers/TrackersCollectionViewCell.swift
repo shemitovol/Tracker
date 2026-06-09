@@ -1,17 +1,19 @@
 import UIKit
 
 final class TrackersCollectionViewCell: UICollectionViewCell {
-    private let topContainer = UIView()
-    private let emojiLabel = UILabel()
-    private let titleLabel = UILabel()
-
-    private let daysLabel = UILabel()
-    private let recordButton = UIButton()
-    
+    //MARK: - Public Properties
     static let cellIdentifier = "cell"
     
     var onRecordButtonTapped: (() -> Void)?
     
+    //MARK: - UI Elements
+    private let topContainer = UIView()
+    private let emojiLabel = UILabel()
+    private let titleLabel = UILabel()
+    private let daysLabel = UILabel()
+    private let recordButton = UIButton()
+    
+    //MARK: - Initialization
     override init (frame: CGRect){
         super.init(frame: frame)
         
@@ -29,6 +31,7 @@ final class TrackersCollectionViewCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    //MARK: - Private Methods
     private func setupViews() {
         contentView.addSubview(topContainer)
         topContainer.translatesAutoresizingMaskIntoConstraints = false
@@ -99,16 +102,6 @@ final class TrackersCollectionViewCell: UICollectionViewCell {
         onRecordButtonTapped?()
     }
     
-    func configure(tracker: Tracker, isCompleted: Bool, completeDays: Int) {
-        daysLabel.text = daysText(completeDays)
-        topContainer.backgroundColor = tracker.color
-        recordButton.tintColor = tracker.color
-        emojiLabel.text = tracker.emoji
-        titleLabel.text = tracker.name
-        let image = isCompleted ? UIImage(resource: .doneButton) : UIImage(resource: .readyPlusButton)
-        recordButton.setImage(image, for: .normal)
-    }
-    
     private func daysText(_ count: Int) -> String {
         let lastOne = count % 10
         let lastTwo = count % 100
@@ -125,6 +118,21 @@ final class TrackersCollectionViewCell: UICollectionViewCell {
         default:
             return "\(count) дней"
         }
+    }
+    
+    //MARK: - Public Methods
+    func configure(tracker: Tracker, isCompleted: Bool, completeDays: Int) {
+        topContainer.backgroundColor = tracker.color
+        recordButton.tintColor = tracker.color
+        emojiLabel.text = tracker.emoji
+        titleLabel.text = tracker.name
+        updateCompletionState(isCompleted: isCompleted, completedDays: completeDays)
+    }
+    
+    func updateCompletionState(isCompleted: Bool, completedDays: Int) {
+        daysLabel.text = daysText(completedDays)
+        let image = isCompleted ? UIImage(resource: .doneButton) : UIImage(resource: .readyPlusButton)
+        recordButton.setImage(image, for: .normal)
     }
 }
 

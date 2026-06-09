@@ -1,14 +1,18 @@
 import UIKit
 
-final class OptionsCollectionViewCell: UICollectionViewCell {
+final class ScheduleCollectionViewCell: UICollectionViewCell {
+    //MARK: - Piblic Properties
+    static let cellIdentifier = "scheduleCell"
+    
+    var onSwitchChanged: ((Bool) -> Void)?
+    
+    //MARK: - UI Elements
     private let titleLabel = UILabel()
-    private let valueLabel = UILabel()
-    private let chevronImage = UIImageView()
+    private let switchControl = UISwitch()
     private let dividerView = UIView()
-    private let labelsStack = UIStackView()
     
-    static let cellIdentifier = "optionsCell"
     
+    //MARK: - Initialization
     override init (frame: CGRect){
         super.init(frame: frame)
         
@@ -16,46 +20,44 @@ final class OptionsCollectionViewCell: UICollectionViewCell {
         setupViews()
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        onSwitchChanged = nil
+    }
+    
     required init?(coder: NSCoder){
         fatalError("init(coder:) has not been implemented")
     }
     
+    //MARK: - Private Methods
     private func addSubviews() {
-        contentView.addSubview(chevronImage)
-        contentView.addSubview(labelsStack)
+        contentView.addSubview(switchControl)
+        contentView.addSubview(titleLabel)
         contentView.addSubview(dividerView)
     }
     
     private func setupViews() {
         contentView.backgroundColor = UIColor(resource: .ypBackgroundDay)
         
-        chevronImage.translatesAutoresizingMaskIntoConstraints = false
-        chevronImage.image = UIImage(resource: .chevron)
+        switchControl.translatesAutoresizingMaskIntoConstraints = false
+        switchControl.addTarget(
+            self,
+            action: #selector(switchValueChanged),
+            for: .valueChanged
+        )
         NSLayoutConstraint.activate ([
-            chevronImage.heightAnchor.constraint(equalToConstant: 24),
-            chevronImage.widthAnchor.constraint(equalToConstant: 24),
-            chevronImage.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            chevronImage.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
+            switchControl.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            switchControl.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
         ])
         
-        labelsStack.translatesAutoresizingMaskIntoConstraints = false
-        labelsStack.axis = .vertical
-        labelsStack.spacing = 2
-        labelsStack.alignment = .leading
-        NSLayoutConstraint.activate ([
-            labelsStack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            labelsStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            labelsStack.trailingAnchor.constraint(equalTo: chevronImage.leadingAnchor, constant: -1)
-        ])
-        
-        labelsStack.addArrangedSubview(titleLabel)
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.font = .systemFont(ofSize: 17, weight: .regular)
         titleLabel.textColor = UIColor(resource: .ypBlackDay)
-        
-        labelsStack.addArrangedSubview(valueLabel)
-        valueLabel.font = .systemFont(ofSize: 17, weight: .regular)
-        valueLabel.textColor = UIColor(resource: .ypGray)
-
+        NSLayoutConstraint.activate ([
+            titleLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            titleLabel.trailingAnchor.constraint(equalTo: switchControl.leadingAnchor, constant: -16)
+        ])
         
         dividerView.translatesAutoresizingMaskIntoConstraints = false
         dividerView.backgroundColor = UIColor(resource: .ypGray)
@@ -67,11 +69,15 @@ final class OptionsCollectionViewCell: UICollectionViewCell {
         ])
     }
     
-    func configure (title: String, value: String?, isFirst: Bool, isLast: Bool) {
+    @objc
+    private func switchValueChanged() {
+        onSwitchChanged?(switchControl.isOn)
+    }
+    
+    //MARK: - Public Methods
+    func configure (title: String, isSelected: Bool, isFirst: Bool, isLast: Bool) {
         titleLabel.text = title
-        valueLabel.text = value
-        valueLabel.isHidden = value == nil
-        
+        switchControl.isOn = isSelected
         layer.masksToBounds = true
         layer.cornerRadius = 16
         
@@ -99,4 +105,3 @@ final class OptionsCollectionViewCell: UICollectionViewCell {
         dividerView.isHidden = isLast
     }
 }
-

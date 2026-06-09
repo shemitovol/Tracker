@@ -26,6 +26,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         )
         
         let tabBarController = UITabBarController()
+        let appearance = UITabBarAppearance()
+        appearance.configureWithDefaultBackground()
+        appearance.shadowColor = UIColor.lightGray
+        tabBarController.tabBar.standardAppearance = appearance
+        tabBarController.tabBar.scrollEdgeAppearance = appearance
         tabBarController.viewControllers = [
             trackersNavController,
             statisticVC

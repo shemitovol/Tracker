@@ -1,10 +1,13 @@
 import UIKit
 
 final class TrackersSupplementaryView: UICollectionReusableView {
+    //MARK: - Public Properties
     static let headerIdentifier = "header"
     
+    //MARK: - UI Elements
     private let titleLabel = UILabel()
     
+    //MARK: - Initialization
     override init(frame: CGRect){
         super.init(frame: frame)
         
@@ -21,6 +24,7 @@ final class TrackersSupplementaryView: UICollectionReusableView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    //MARK: - Public Methods
     func configure(title: String){
         titleLabel.text = title
     }

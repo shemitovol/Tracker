@@ -1,41 +1,25 @@
 import UIKit
 
 final class CreateTrackerViewController: UIViewController {
+    //MARK: - Public Properties
+    var onTrackerCreated: ((TrackerCategory) -> Void)?
     
+    //MARK: - UI Elements
     private let titleLabel = UILabel()
     private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
     private let cancelButton = UIButton()
     private let createButton = UIButton()
     private let buttonsStack = UIStackView()
-    private let optionTitles = [
-        "Категория",
-        "Расписание"
-    ]
-    private let trackerColors: [UIColor] = [
-        UIColor(resource: .colorSelection1),
-        UIColor(resource: .colorSelection2),
-        UIColor(resource: .colorSelection3),
-        UIColor(resource: .colorSelection4),
-        UIColor(resource: .colorSelection5),
-        UIColor(resource: .colorSelection6),
-        UIColor(resource: .colorSelection7),
-        UIColor(resource: .colorSelection8),
-        UIColor(resource: .colorSelection9),
-        UIColor(resource: .colorSelection10),
-        UIColor(resource: .colorSelection11),
-        UIColor(resource: .colorSelection12),
-        UIColor(resource: .colorSelection13),
-        UIColor(resource: .colorSelection14),
-        UIColor(resource: .colorSelection15),
-        UIColor(resource: .colorSelection16),
-        UIColor(resource: .colorSelection17),
-        UIColor(resource: .colorSelection18)
-    ]
+    private let trackerColors: [UIColor] = (1...18).compactMap {
+        UIColor(named: "colorSelection\($0)")
+    }
+    
+    //MARK: - Private Properties
     private var trackerName = ""
     private var isNameWarningShow = false
     private var selectedSchedule: [WeekDay] = []
-    var onTrackerCreated: ((TrackerCategory) -> Void)?
     
+    //MARK: - Initialization
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -45,6 +29,7 @@ final class CreateTrackerViewController: UIViewController {
         view.backgroundColor = UIColor(resource: .ypWhiteDay)
     }
     
+    //MARK: - Private Methods
     private func addSubviews() {
         view.addSubview(createButton)
         view.addSubview(titleLabel)
@@ -76,7 +61,7 @@ final class CreateTrackerViewController: UIViewController {
     private func setupCollectionView() {
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.contentInset.top = 24
-        collectionView.register(NameCollectionViewCell.self, forCellWithReuseIdentifier: NameCollectionViewCell.cellIdentifier)
+        collectionView.register(TrackerNameInputCell.self, forCellWithReuseIdentifier: TrackerNameInputCell.cellIdentifier)
         collectionView.register(OptionsCollectionViewCell.self, forCellWithReuseIdentifier: OptionsCollectionViewCell.cellIdentifier)
         collectionView.dataSource = self
         collectionView.delegate = self
@@ -216,6 +201,7 @@ final class CreateTrackerViewController: UIViewController {
     }
 }
 
+//MARK: UICollectionViewDataSource
 extension CreateTrackerViewController: UICollectionViewDataSource {
     func numberOfSections(in collectionView: UICollectionView) -> Int {
         Sections.allCases.count
@@ -230,7 +216,7 @@ extension CreateTrackerViewController: UICollectionViewDataSource {
         case .name:
             return 1
         case .options:
-            return optionTitles.count
+            return TrackerOption.allCases.count
         }
     }
     
@@ -242,8 +228,8 @@ extension CreateTrackerViewController: UICollectionViewDataSource {
         switch section {
         case .name:
             guard let cell = collectionView.dequeueReusableCell(
-                withReuseIdentifier: NameCollectionViewCell.cellIdentifier,
-                for: indexPath) as? NameCollectionViewCell else {
+                withReuseIdentifier: TrackerNameInputCell.cellIdentifier,
+                for: indexPath) as? TrackerNameInputCell else {
                 return UICollectionViewCell()
             }
             
@@ -267,8 +253,8 @@ extension CreateTrackerViewController: UICollectionViewDataSource {
                 return UICollectionViewCell()
             }
             
-            let item = optionTitles[indexPath.item]
-            let lastIndex = optionTitles.count - 1
+            let option = TrackerOption.allCases[indexPath.item]
+            let item = option.rawValue
             let value: String?
             
             if indexPath.item == 0 {
@@ -276,12 +262,26 @@ extension CreateTrackerViewController: UICollectionViewDataSource {
             } else {
                 value = selectedSchedule.isEmpty ? nil : scheduleText()
             }
-            cell.configure(title: item, value: value, isFirst: indexPath.item == 0, isLast: indexPath.item == lastIndex)
+            let position: CellPosition
+            let count = TrackerOption.allCases.count
+
+            if count == 1 {
+                position = .single
+            } else if indexPath.item == 0 {
+                position = .first
+            } else if indexPath.item == count - 1 {
+                position = .last
+            } else {
+                position = .middle
+            }
+            
+            cell.configure(title: item, value: value, position: position)
             return cell
         }
     }
 }
 
+//MARK: - UICollectionViewDelegateFlowLayout
 extension CreateTrackerViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let section = Sections(rawValue: indexPath.section) else {
@@ -292,16 +292,16 @@ extension CreateTrackerViewController: UICollectionViewDelegateFlowLayout {
         case .name:
             break
         case .options:
-            switch indexPath.item {
-            case 0:
+            let option = TrackerOption.allCases[indexPath.item]
+            switch option {
+            case .category:
                 openCategory()
-            case 1:
+            case .schedule:
                 openSchedule()
-            default:
-                break
             }
         }
     }
+    
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         guard let section = Sections(rawValue: indexPath.section) else {
             return .zero

@@ -1,12 +1,16 @@
 import UIKit
 
 final class ScheduleViewController: UIViewController {
-    private let titleLabel = UILabel()
-    private let readyButton = UIButton()
-    private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
+    //MARK: - Piblic Properties
     var selectedDays: Set<WeekDay> = []
     var onScheduleSelected: (([WeekDay]) -> Void)?
     
+    //MARK: - UI Elements
+    private let titleLabel = UILabel()
+    private let readyButton = UIButton()
+    private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
+    
+    //MARK: - initialization
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -15,6 +19,7 @@ final class ScheduleViewController: UIViewController {
         view.backgroundColor = UIColor(resource: .ypWhiteDay)
     }
     
+    //MARK: - Private Methods
     private func setupViews() {
         setupTitleLabel()
         setupReadyButton()
@@ -84,6 +89,7 @@ final class ScheduleViewController: UIViewController {
     }
 }
 
+//MARK: - UICollectionViewDataSource
 extension ScheduleViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         WeekDay.allCases.count
@@ -112,6 +118,7 @@ extension ScheduleViewController: UICollectionViewDataSource {
     }
 }
 
+//MARK: - UICollectionViewDelegateFlowLayout
 extension ScheduleViewController: UICollectionViewDelegateFlowLayout {
     func collectionView (_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         CGSize(width: collectionView.bounds.width - 32, height: 75)

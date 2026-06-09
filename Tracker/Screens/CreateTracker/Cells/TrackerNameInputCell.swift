@@ -1,13 +1,19 @@
 import UIKit
 
-final class NameCollectionViewCell: UICollectionViewCell {
+final class TrackerNameInputCell: UICollectionViewCell {
+    //MARK: - Piblic Properties
+    static let cellIdentifier = "nameCell"
+    
+    var onTextChanged: ((String) -> Void)?
+    var onWarningLabelChanged: ((Bool) -> Void)?
+    
+    //MARK: - UI Elements
     private let stackView = UIStackView()
     private let topContainer = UIView()
     private let trackerNameTextField = UITextField()
     private let warningLabel = UILabel()
-    static let cellIdentifier = "nameCell"
-    var onTextChanged: ((String) -> Void)?
-    var onWarningLabelChanged: ((Bool) -> Void)?
+
+    //MARK: - Initialization
     override init (frame: CGRect){
         super.init(frame: frame)
         
@@ -18,6 +24,7 @@ final class NameCollectionViewCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    //MARK: - Private Methods
     private func setupViews () {
         contentView.backgroundColor = UIColor(resource: .ypWhiteDay)
         
@@ -44,6 +51,7 @@ final class NameCollectionViewCell: UICollectionViewCell {
         trackerNameTextField.translatesAutoresizingMaskIntoConstraints = false
         trackerNameTextField.placeholder = "Введите название трекера"
         trackerNameTextField.delegate = self
+        trackerNameTextField.clearButtonMode = .whileEditing
         NSLayoutConstraint.activate ([
             trackerNameTextField.topAnchor.constraint(equalTo: topContainer.topAnchor),
             trackerNameTextField.bottomAnchor.constraint(equalTo: topContainer.bottomAnchor),
@@ -60,7 +68,8 @@ final class NameCollectionViewCell: UICollectionViewCell {
     }
 }
 
-extension NameCollectionViewCell: UITextFieldDelegate {
+//MARK: - UITextFieldDelegate
+extension TrackerNameInputCell: UITextFieldDelegate {
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         let currentText = textField.text ?? ""
         
