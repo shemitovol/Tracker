@@ -10,6 +10,7 @@ final class TrackersViewController: UIViewController {
     private let datePicker = UIDatePicker()
     
     //MARK: - Private Properties
+    private var currentDate: Date = Date()
     private var categories: [TrackerCategory] = []
     private var visibleCategories: [TrackerCategory] = []
     private var completedTrackers: [TrackerRecord] = []
@@ -124,6 +125,7 @@ final class TrackersViewController: UIViewController {
     
     @objc
     private func dateChanged() {
+        currentDate = datePicker.date
         updateUI()
     }
     
@@ -217,7 +219,7 @@ final class TrackersViewController: UIViewController {
     private func completeTracker(_ tracker: Tracker){
         let record = TrackerRecord(
             trackerID: tracker.id,
-            date: datePicker.date
+            date: currentDate
         )
         completedTrackers.append(record)
     }
@@ -227,13 +229,13 @@ final class TrackersViewController: UIViewController {
             $0.trackerID == tracker.id &&
             Calendar.current.isDate(
                 $0.date,
-                inSameDayAs: datePicker.date
+                inSameDayAs: currentDate
             )
         }
     }
     
     private func isFutureDate() -> Bool {
-        Calendar.current.startOfDay(for: datePicker.date) > Calendar.current.startOfDay(for: Date())
+        Calendar.current.startOfDay(for: currentDate) > Calendar.current.startOfDay(for: Date())
     }
     
     private func updateUI() {
@@ -265,7 +267,7 @@ final class TrackersViewController: UIViewController {
     }
     
     private func updateVisibleCategories() {
-        let selectedWeekDay = weekDay(for: datePicker.date)
+        let selectedWeekDay = weekDay(for: currentDate)
         visibleCategories = categories.compactMap { category in
             let trackers = category.trackers.filter { tracker in
                 let matchesWeekDay = tracker.schedule.contains(selectedWeekDay)
@@ -281,6 +283,10 @@ final class TrackersViewController: UIViewController {
             )
         }
         collectionView.reloadData()
+    }
+    
+    private func completedCount(for tracker: Tracker) -> Int {
+        completedTrackers.filter { $0.trackerID == tracker.id }.count
     }
 }
 
@@ -307,7 +313,7 @@ extension TrackersViewController: UICollectionViewDataSource {
             
             let completed = self.isTrackerCompleted(
                 trackerID: tracker.id,
-                date: self.datePicker.date
+                date: currentDate
             )
             
             if completed {
@@ -316,10 +322,8 @@ extension TrackersViewController: UICollectionViewDataSource {
                 self.completeTracker(tracker)
             }
             
-            let newCompleted = self.isTrackerCompleted(trackerID: tracker.id, date: self.datePicker.date)
-            let newCount = self.completedTrackers.filter {
-                $0.trackerID == tracker.id
-            }.count
+            let newCompleted = self.isTrackerCompleted(trackerID: tracker.id, date: currentDate)
+            let newCount = completedCount(for: tracker)
             
             if let cell = self.collectionView.cellForItem(at: indexPath) as? TrackersCollectionViewCell {
                 cell.updateCompletionState(isCompleted: newCompleted, completedDays: newCount)
@@ -328,12 +332,10 @@ extension TrackersViewController: UICollectionViewDataSource {
         
         let completed = isTrackerCompleted(
             trackerID: tracker.id,
-            date: datePicker.date
+            date: currentDate
         )
         
-        let count = completedTrackers.filter {
-            $0.trackerID == tracker.id
-        }.count
+        let count = completedCount(for: tracker)
         
         cell.configure(tracker: tracker, isCompleted: completed, completeDays: count)
         return cell
