@@ -1,10 +1,3 @@
-//
-//  SceneDelegate.swift
-//  Tracker
-//
-//  Created by Олег Сергеевич on 18.05.2026.
-//
-
 import UIKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
@@ -13,10 +6,39 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
-        // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
-        // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
-        guard let _ = (scene as? UIWindowScene) else { return }
+        guard let windowScene = (scene as? UIWindowScene) else {return}
+        
+        let window = UIWindow(windowScene: windowScene)
+        
+        let trackersVC = TrackersViewController()
+        let trackersNavController = UINavigationController(rootViewController: trackersVC)
+        trackersNavController.tabBarItem = UITabBarItem(
+            title: "Трекеры",
+            image: UIImage(resource: .trackers1),
+            selectedImage: .trackers2
+        )
+        
+        let statisticVC = StatisticViewController()
+        statisticVC.tabBarItem = UITabBarItem(
+            title: "Статистика",
+            image: UIImage(resource: .stat1),
+            selectedImage: .stat2
+        )
+        
+        let tabBarController = UITabBarController()
+        let appearance = UITabBarAppearance()
+        appearance.configureWithDefaultBackground()
+        appearance.shadowColor = UIColor.lightGray
+        tabBarController.tabBar.standardAppearance = appearance
+        tabBarController.tabBar.scrollEdgeAppearance = appearance
+        tabBarController.viewControllers = [
+            trackersNavController,
+            statisticVC
+        ]
+        
+        window.rootViewController = tabBarController
+        window.makeKeyAndVisible()
+        self.window = window
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {

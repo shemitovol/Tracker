@@ -1,0 +1,113 @@
+import UIKit
+
+final class OptionsCollectionViewCell: UICollectionViewCell {
+    //MARK: - Piblic Properties
+    static let cellIdentifier = "optionsCell"
+    
+    //MARK: - UI Elements
+    private let titleLabel = UILabel()
+    private let valueLabel = UILabel()
+    private let chevronImage = UIImageView()
+    private let dividerView = UIView()
+    private let labelsStack = UIStackView()
+    
+    //MARK: - Initialization
+    override init (frame: CGRect){
+        super.init(frame: frame)
+        
+        addSubviews()
+        setupViews()
+    }
+    
+    required init?(coder: NSCoder){
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    //MARK: - Private Methods
+    private func addSubviews() {
+        contentView.addSubview(chevronImage)
+        contentView.addSubview(labelsStack)
+        contentView.addSubview(dividerView)
+    }
+    
+    private func setupViews() {
+        contentView.backgroundColor = UIColor(resource: .ypBackgroundDay)
+        
+        chevronImage.translatesAutoresizingMaskIntoConstraints = false
+        chevronImage.image = UIImage(resource: .chevron)
+        NSLayoutConstraint.activate ([
+            chevronImage.heightAnchor.constraint(equalToConstant: 24),
+            chevronImage.widthAnchor.constraint(equalToConstant: 24),
+            chevronImage.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            chevronImage.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
+        ])
+        
+        labelsStack.translatesAutoresizingMaskIntoConstraints = false
+        labelsStack.axis = .vertical
+        labelsStack.spacing = 2
+        labelsStack.alignment = .leading
+        NSLayoutConstraint.activate ([
+            labelsStack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            labelsStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            labelsStack.trailingAnchor.constraint(equalTo: chevronImage.leadingAnchor, constant: -1)
+        ])
+        
+        labelsStack.addArrangedSubview(titleLabel)
+        titleLabel.font = .systemFont(ofSize: 17, weight: .regular)
+        titleLabel.textColor = UIColor(resource: .ypBlackDay)
+        
+        labelsStack.addArrangedSubview(valueLabel)
+        valueLabel.font = .systemFont(ofSize: 17, weight: .regular)
+        valueLabel.textColor = UIColor(resource: .ypGray)
+
+        
+        dividerView.translatesAutoresizingMaskIntoConstraints = false
+        dividerView.backgroundColor = UIColor(resource: .ypGray)
+        NSLayoutConstraint.activate ([
+            dividerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            dividerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            dividerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            dividerView.heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale)
+        ])
+    }
+    
+    //MARK: - Public Methods
+    func configure (title: String, value: String?, position: CellPosition) {
+        titleLabel.text = title
+        valueLabel.text = value
+        valueLabel.isHidden = value == nil
+        
+        layer.masksToBounds = true
+        layer.cornerRadius = 16
+        
+        switch position {
+        case .single:
+            layer.maskedCorners = [
+                .layerMinXMinYCorner,
+                .layerMaxXMinYCorner,
+                .layerMinXMaxYCorner,
+                .layerMaxXMaxYCorner
+            ]
+            dividerView.isHidden = true
+
+        case .first:
+            layer.maskedCorners = [
+                .layerMinXMinYCorner,
+                .layerMaxXMinYCorner
+            ]
+            dividerView.isHidden = false
+
+        case .middle:
+            layer.maskedCorners = []
+            dividerView.isHidden = false
+
+        case .last:
+            layer.maskedCorners = [
+                .layerMinXMaxYCorner,
+                .layerMaxXMaxYCorner
+            ]
+            dividerView.isHidden = true
+        }
+    }
+}
+
