@@ -13,11 +13,18 @@ final class CreateTrackerViewController: UIViewController {
     private let trackerColors: [UIColor] = (1...18).compactMap {
         UIColor(named: "colorSelection\($0)")
     }
+    private let emojis = [
+        "🙂", "😻", "🌺", "🐶", "❤️", "😱",
+        "😇", "😡", "🥶", "🤔", "🙌", "🍔",
+        "🥦", "🏓", "🥇", "🎸", "🏝", "😪"
+    ]
     
     //MARK: - Private Properties
     private var trackerName = ""
     private var isNameWarningShow = false
     private var selectedSchedule: [WeekDay] = []
+    private var selectedEmojiIndex: Int?
+    private var selectedColorIndex: Int?
     
     //MARK: - Initialization
     override func viewDidLoad() {
@@ -35,7 +42,6 @@ final class CreateTrackerViewController: UIViewController {
         view.addSubview(titleLabel)
         view.addSubview(buttonsStack)
         view.addSubview(collectionView)
-        view.addSubview(cancelButton)
     }
     
     private func setupViews() {
@@ -63,6 +69,9 @@ final class CreateTrackerViewController: UIViewController {
         collectionView.contentInset.top = 24
         collectionView.register(TrackerNameInputCell.self, forCellWithReuseIdentifier: TrackerNameInputCell.cellIdentifier)
         collectionView.register(OptionsCollectionViewCell.self, forCellWithReuseIdentifier: OptionsCollectionViewCell.cellIdentifier)
+        collectionView.register(TrackerEmojiCell.self, forCellWithReuseIdentifier: TrackerEmojiCell.cellIdentifier)
+        collectionView.register(TrackerColorCell.self, forCellWithReuseIdentifier: TrackerColorCell.cellIdentifier)
+        collectionView.register(CreateTrackerSupplementaryView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: CreateTrackerSupplementaryView.headerIdentifier)
         collectionView.dataSource = self
         collectionView.delegate = self
         NSLayoutConstraint.activate ([
@@ -217,6 +226,10 @@ extension CreateTrackerViewController: UICollectionViewDataSource {
             return 1
         case .options:
             return TrackerOption.allCases.count
+        case .emoji:
+            return emojis.count
+        case .color:
+            return trackerColors.count
         }
     }
     
@@ -264,7 +277,7 @@ extension CreateTrackerViewController: UICollectionViewDataSource {
             }
             let position: CellPosition
             let count = TrackerOption.allCases.count
-
+            
             if count == 1 {
                 position = .single
             } else if indexPath.item == 0 {
@@ -277,7 +290,48 @@ extension CreateTrackerViewController: UICollectionViewDataSource {
             
             cell.configure(title: item, value: value, position: position)
             return cell
+        case .emoji:
+            guard let cell = collectionView.dequeueReusableCell(
+                withReuseIdentifier: TrackerEmojiCell.cellIdentifier,
+                for: indexPath) as? TrackerEmojiCell else {
+                return UICollectionViewCell()
+            }
+            cell.configure(emoji: emojis[indexPath.item], isSelected: selectedEmojiIndex == indexPath.item)
+            return cell
+        case .color:
+            guard let cell = collectionView.dequeueReusableCell(
+                withReuseIdentifier: TrackerColorCell.cellIdentifier,
+                for: indexPath) as? TrackerColorCell else {
+                return UICollectionViewCell()
+            }
+            cell.configure(color: trackerColors[indexPath.item], isSelected: selectedColorIndex == indexPath.item)
+            return cell
         }
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
+        guard let section = Sections(rawValue: indexPath.section) else {
+            return UICollectionReusableView()
+        }
+        
+        guard let header = collectionView.dequeueReusableSupplementaryView(
+            ofKind: kind,
+            withReuseIdentifier: CreateTrackerSupplementaryView.headerIdentifier,
+            for: indexPath
+        ) as? CreateTrackerSupplementaryView else {
+            return UICollectionReusableView()
+        }
+        
+        switch section {
+        case .emoji:
+            header.configure(title: "Emoji")
+        case .color:
+            header.configure(title: "Цвет")
+        default:
+            header.configure(title: "")
+        }
+        
+        return header
     }
 }
 
@@ -299,6 +353,30 @@ extension CreateTrackerViewController: UICollectionViewDelegateFlowLayout {
             case .schedule:
                 openSchedule()
             }
+            
+        case .emoji:
+            guard selectedEmojiIndex != indexPath.item else {return}
+            let previousIndex = selectedEmojiIndex
+            selectedEmojiIndex = indexPath.item
+            var indexPaths = [indexPath]
+            if let previousIndex {
+                indexPaths.append(
+                    IndexPath(item: previousIndex, section: indexPath.section)
+                )
+            }
+            collectionView.reloadItems(at: indexPaths)
+            
+        case .color:
+            guard selectedColorIndex != indexPath.item else {return}
+            let previousIndex = selectedColorIndex
+            selectedColorIndex = indexPath.item
+            var indexPaths = [indexPath]
+            if let previousIndex {
+                indexPaths.append(
+                    IndexPath(item: previousIndex, section: indexPath.section)
+                )
+            }
+            collectionView.reloadItems(at: indexPaths)
         }
     }
     
@@ -313,23 +391,51 @@ extension CreateTrackerViewController: UICollectionViewDelegateFlowLayout {
             return CGSize(width: collectionView.bounds.width - 32, height: height)
         case .options:
             return CGSize(width: collectionView.bounds.width - 32, height: 75)
+        case .emoji, .color:
+            let columns: CGFloat = 6
+            let inset: CGFloat = 16
+            let totalSpacing: CGFloat = 5 * 5
+            let availableWidth = collectionView.bounds.width - inset * 2 - totalSpacing
+            let itemSize = floor(availableWidth / columns)
+            return CGSize(width: itemSize, height: itemSize)
         }
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        
-        if section == Sections.options.rawValue {
-            return UIEdgeInsets(top: 24, left: 16, bottom: 0, right: 16)
+        guard let section = Sections(rawValue: section) else {
+            return .zero
         }
         
-        return UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        switch section {
+        case .options:
+            return UIEdgeInsets(top: 24, left: 16, bottom: 16, right: 16)
+        case .emoji, .color:
+            return UIEdgeInsets(top: 24, left: 16, bottom: 24, right: 16)
+        default:
+            return UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        }
     }
     
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt: Int) -> CGFloat {
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
         return 0
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
         return 0
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
+        guard let section = Sections(rawValue: section) else {
+            return .zero
+        }
+        
+        switch section {
+        case .emoji:
+            return CGSize(width: collectionView.frame.width, height: 50)
+        case .color:
+            return CGSize(width: collectionView.frame.width, height: 34)
+        default:
+            return .zero
+        }
     }
 }
