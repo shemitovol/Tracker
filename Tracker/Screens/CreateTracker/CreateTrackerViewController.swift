@@ -2,7 +2,7 @@ import UIKit
 
 final class CreateTrackerViewController: UIViewController {
     //MARK: - Public Properties
-    var onTrackerCreated: ((TrackerCategory) -> Void)?
+    var onTrackerCreated: ((Tracker) -> Void)?
     
     //MARK: - UI Elements
     private let titleLabel = UILabel()
@@ -130,28 +130,29 @@ final class CreateTrackerViewController: UIViewController {
     private func createTapped() {
         guard
             !trackerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-            !selectedSchedule.isEmpty
+            !selectedSchedule.isEmpty,
+            let selectedEmojiIndex,
+            let selectedColorIndex
         else { return }
         
         let tracker = Tracker(
             id: UUID(),
             name: trackerName,
-            color: trackerColors.randomElement() ?? UIColor(resource: .colorSelection1),
-            emoji: "⭐️",
+            color: trackerColors[selectedColorIndex],
+            emoji: emojis[selectedEmojiIndex],
             schedule: selectedSchedule
         )
-        
-        let category = TrackerCategory(
-            title: "Новая категория",
-            trackers: [tracker]
-        )
-        
-        onTrackerCreated?(category)
+                
+        onTrackerCreated?(tracker)
         dismiss(animated: true)
     }
     
     private func updateCreateButton() {
-        let isEnabled = !selectedSchedule.isEmpty && !trackerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let isEnabled =
+            !selectedSchedule.isEmpty &&
+            !trackerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+            selectedEmojiIndex != nil &&
+            selectedColorIndex != nil
         
         createButton.isEnabled = isEnabled
         createButton.backgroundColor = isEnabled ? UIColor(resource: .ypBlackDay) : UIColor(resource: .ypGray)
@@ -365,6 +366,7 @@ extension CreateTrackerViewController: UICollectionViewDelegateFlowLayout {
                 )
             }
             collectionView.reloadItems(at: indexPaths)
+            updateCreateButton()
             
         case .color:
             guard selectedColorIndex != indexPath.item else {return}
@@ -377,6 +379,7 @@ extension CreateTrackerViewController: UICollectionViewDelegateFlowLayout {
                 )
             }
             collectionView.reloadItems(at: indexPaths)
+            updateCreateButton()
         }
     }
     

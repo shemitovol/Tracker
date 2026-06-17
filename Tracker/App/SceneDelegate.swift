@@ -10,7 +10,18 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         let window = UIWindow(windowScene: windowScene)
         
-        let trackersVC = TrackersViewController()
+        let context = CoreDataStack.shared.context
+        
+        let trackerStore = TrackerStore(context: context)
+        let trackerCategoryStore = TrackerCategoryStore(context: context, trackerStore: trackerStore)
+        let trackerRecordStore = TrackerRecordStore(context: context)
+        
+        let trackersVC = TrackersViewController(
+            trackerCategoryStore: trackerCategoryStore,
+            trackerStore: trackerStore,
+            trackerRecordStore: trackerRecordStore
+        )
+        
         let trackersNavController = UINavigationController(rootViewController: trackersVC)
         trackersNavController.tabBarItem = UITabBarItem(
             title: "Трекеры",

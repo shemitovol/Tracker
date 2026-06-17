@@ -1,0 +1,80 @@
+import CoreData
+
+final class TrackerRecordStore: NSObject {
+    //MARK: - Public Properties
+    weak var delegate: TrackerRecordStoreDelegate?
+    
+    //MARK: - Private Properties
+    private let context: NSManagedObjectContext
+    private lazy var fetchedResultsController: NSFetchedResultsController<TrackerRecordCoreData> = {
+        let request = TrackerRecordCoreData.fetchRequest()
+        request.sortDescriptors = [ NSSortDescriptor(key: "date", ascending: false) ]
+
+        let frc = NSFetchedResultsController(
+            fetchRequest: request,
+            managedObjectContext: context,
+            sectionNameKeyPath: nil,
+            cacheName: nil
+        )
+
+        frc.delegate = self
+        try? frc.performFetch()
+        return frc
+    }()
+    
+    //MARK: - Initialization
+    init(context: NSManagedObjectContext) {
+        self.context = context
+        super.init()
+        _ = fetchedResultsController
+    }
+    
+    //MARK: - Public Methods
+    func addRecord(tracker: TrackerCoreData, date: Date) throws {
+        let record = TrackerRecordCoreData(context: context)
+        record.date = Calendar.current.startOfDay(for: date)
+        record.tracker = tracker
+        try context.save()
+    }
+    
+    func deleteRecord(trackerID: UUID, date: Date) throws {
+        let request = TrackerRecordCoreData.fetchRequest()
+        request.predicate = NSPredicate(
+            format: "tracker.id == %@ AND date == %@",
+            trackerID as CVarArg,
+            Calendar.current.startOfDay(for: date) as NSDate
+        )
+        
+        let records = try context.fetch(request)
+        records.forEach {
+            context.delete($0)
+        }
+        try context.save()
+    }
+    
+    func isCompleted(trackerID: UUID, date: Date) throws -> Bool {
+        let request = TrackerRecordCoreData.fetchRequest()
+        request.predicate = NSPredicate(
+            format: "tracker.id == %@ AND date == %@",
+            trackerID as CVarArg,
+            Calendar.current.startOfDay(for: date) as NSDate
+        )
+        return try context.count(for: request) > 0
+    }
+    
+    func completedCount(trackerID: UUID) throws -> Int {
+        let request = TrackerRecordCoreData.fetchRequest()
+        request.predicate = NSPredicate(
+            format: "tracker.id == %@",
+            trackerID as CVarArg
+        )
+        return try context.count(for: request)
+    }
+}
+
+//MARK: - NSFetchedResultsControllerDelegate
+extension TrackerRecordStore: NSFetchedResultsControllerDelegate {
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<any NSFetchRequestResult>) {
+        delegate?.didUpdateRecords()
+    }
+}
