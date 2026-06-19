@@ -31,7 +31,7 @@ final class TrackerStore: NSObject {
     }
     
     //MARK: - Public Methods
-    func makeTracker(from trackerCoreData: TrackerCoreData) -> Tracker {
+    func makeTracker(from trackerCoreData: TrackerCoreData) -> Tracker? {
         guard
             let id = trackerCoreData.id,
             let name = trackerCoreData.name,
@@ -39,7 +39,7 @@ final class TrackerStore: NSObject {
             let emoji = trackerCoreData.emoji,
             let schedule = trackerCoreData.schedule as? [WeekDay]
         else {
-            fatalError("Failed to create Tracker from CoreData")
+            return nil
         }
         
         return Tracker(
@@ -62,15 +62,6 @@ final class TrackerStore: NSObject {
         trackerCoreData.category = category
 
         try context.save()
-    }
-    
-    func fetchTrackerCoreData(by id: UUID) throws -> TrackerCoreData? {
-        let request = TrackerCoreData.fetchRequest()
-        request.predicate = NSPredicate(
-            format: "id == %@",
-            id as CVarArg
-        )
-        return try context.fetch(request).first
     }
 }
 

@@ -129,7 +129,7 @@ final class TrackersViewController: UIViewController {
                 let category = try self.trackerCategoryStore.addCategoryIfNeeded(title: "Новая категория")
                 try self.trackerStore.addTracker(tracker, category: category)
             } catch {
-                print(error)
+                showError(error)
             }
         }
         present(createTrackerVC, animated: true)
@@ -186,6 +186,22 @@ final class TrackersViewController: UIViewController {
         collectionView.isHidden = isEmpty
     }
     
+    private func showError(_ error: Error) {
+        let alert = UIAlertController(
+            title: "Ошибка",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(
+            UIAlertAction(
+                title: "OK",
+                style: .default
+            )
+        )
+        present(alert, animated: true)
+    }
+    
     //MARK: - Setup UI Constraints Private Methods
     
     private func setupConstraints() {
@@ -238,17 +254,16 @@ final class TrackersViewController: UIViewController {
         do {
             return try trackerRecordStore.isCompleted(trackerID: trackerID, date: date)
         } catch {
-            print(error)
+            showError(error)
             return false
         }
     }
     
     private func completeTracker(_ tracker: Tracker) {
         do{
-            guard let trackerCoreData = try trackerStore.fetchTrackerCoreData(by: tracker.id) else { return }
-            try trackerRecordStore.addRecord(tracker: trackerCoreData, date: currentDate)
+            try trackerRecordStore.addRecord(trackerID: tracker.id, date: currentDate)
         } catch {
-            print(error)
+            showError(error)
         }
         
     }
@@ -257,7 +272,7 @@ final class TrackersViewController: UIViewController {
         do {
             try trackerRecordStore.deleteRecord(trackerID: tracker.id, date: currentDate)
         } catch {
-            print(error)
+            showError(error)
         }
     }
     
@@ -316,7 +331,7 @@ final class TrackersViewController: UIViewController {
         do {
             return try trackerRecordStore.completedCount(trackerID: tracker.id)
         } catch {
-            print(error)
+            showError(error)
             return 0
         }
     }

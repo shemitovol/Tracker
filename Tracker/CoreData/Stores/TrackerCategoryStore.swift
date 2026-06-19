@@ -48,15 +48,15 @@ final class TrackerCategoryStore: NSObject {
     
     func fetchCategories() -> [TrackerCategory] {
         guard let objects = fetchedResultsController.fetchedObjects else { return [] }
-        return objects.map(makeCategory)
+        return objects.compactMap(makeCategory)
     }
     
     //MARK: - Private Methods
-    private func makeCategory(from categoryCoreData: TrackerCategoryCoreData) -> TrackerCategory {
+    private func makeCategory(from categoryCoreData: TrackerCategoryCoreData) -> TrackerCategory? {
         guard let title = categoryCoreData.title else {
-            fatalError("Category title is nil")
+            return nil
         }
-        let trackers = (categoryCoreData.trackers?.allObjects as? [TrackerCoreData])?.map {trackerStore.makeTracker(from: $0)} ?? []
+        let trackers = (categoryCoreData.trackers?.allObjects as? [TrackerCoreData])?.compactMap {trackerStore.makeTracker(from: $0)} ?? []
         return TrackerCategory(title: title, trackers: trackers)
     }
 }

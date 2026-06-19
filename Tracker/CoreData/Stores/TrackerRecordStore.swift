@@ -30,7 +30,16 @@ final class TrackerRecordStore: NSObject {
     }
     
     //MARK: - Public Methods
-    func addRecord(tracker: TrackerCoreData, date: Date) throws {
+    func addRecord(trackerID: UUID, date: Date) throws {
+        let request = TrackerCoreData.fetchRequest()
+        
+        request.predicate = NSPredicate(format: "id == %@", trackerID as CVarArg)
+        guard let tracker = try context.fetch(request).first else {
+            throw NSError(domain: "TrackerRecordStore",
+                          code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "Трекер не найден"])
+        }
+        
         let record = TrackerRecordCoreData(context: context)
         record.date = Calendar.current.startOfDay(for: date)
         record.tracker = tracker
