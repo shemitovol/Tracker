@@ -10,20 +10,40 @@ final class TrackersViewController: UIViewController {
     private let datePicker = UIDatePicker()
     
     //MARK: - Private Properties
+    private let trackerCategoryStore: TrackerCategoryStore
+    private let trackerStore: TrackerStore
+    private let trackerRecordStore: TrackerRecordStore
     private var currentDate: Date = Date()
     private var categories: [TrackerCategory] = []
     private var visibleCategories: [TrackerCategory] = []
-    private var completedTrackers: [TrackerRecord] = []
     private var searchText = ""
     
     //MARK: - Initialization
+    init(
+        trackerCategoryStore: TrackerCategoryStore,
+        trackerStore: TrackerStore,
+        trackerRecordStore: TrackerRecordStore
+    ) {
+        self.trackerCategoryStore = trackerCategoryStore
+        self.trackerStore = trackerStore
+        self.trackerRecordStore = trackerRecordStore
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupViews()
         setupConstraints()
         setupNavBar()
         view.backgroundColor = UIColor(resource: .ypWhiteDay)
-        updateUI()
+        trackerStore.delegate = self
+        trackerRecordStore.delegate = self
+        trackerCategoryStore.delegate = self
+        reloadCategories()
     }
 
     //MARK: - Setup UI Private Methods
@@ -94,15 +114,23 @@ final class TrackersViewController: UIViewController {
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: container)
     }
     
+    private func reloadCategories() {
+        categories = trackerCategoryStore.fetchCategories()
+        updateUI()
+    }
+    
     @objc
     private func plusTapped() {
         let createTrackerVC = CreateTrackerViewController()
         
-        createTrackerVC.onTrackerCreated = { [weak self] category in
+        createTrackerVC.onTrackerCreated = { [weak self] tracker in
             guard let self else { return }
-            
-            self.categories.append(category)
-            self.updateUI()
+            do {
+                let category = try self.trackerCategoryStore.addCategoryIfNeeded(title: "Новая категория")
+                try self.trackerStore.addTracker(tracker, category: category)
+            } catch {
+                showError(error)
+            }
         }
         present(createTrackerVC, animated: true)
     }
@@ -158,6 +186,22 @@ final class TrackersViewController: UIViewController {
         collectionView.isHidden = isEmpty
     }
     
+    private func showError(_ error: Error) {
+        let alert = UIAlertController(
+            title: "Ошибка",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(
+            UIAlertAction(
+                title: "OK",
+                style: .default
+            )
+        )
+        present(alert, animated: true)
+    }
+    
     //MARK: - Setup UI Constraints Private Methods
     
     private func setupConstraints() {
@@ -207,30 +251,28 @@ final class TrackersViewController: UIViewController {
     //MARK: - Lifecycle Private Methods
     
     private func isTrackerCompleted(trackerID: UUID, date: Date) -> Bool {
-        completedTrackers.contains {
-            $0.trackerID == trackerID &&
-            Calendar.current.isDate(
-                $0.date,
-                inSameDayAs: date
-            )
+        do {
+            return try trackerRecordStore.isCompleted(trackerID: trackerID, date: date)
+        } catch {
+            showError(error)
+            return false
         }
     }
     
-    private func completeTracker(_ tracker: Tracker){
-        let record = TrackerRecord(
-            trackerID: tracker.id,
-            date: currentDate
-        )
-        completedTrackers.append(record)
+    private func completeTracker(_ tracker: Tracker) {
+        do{
+            try trackerRecordStore.addRecord(trackerID: tracker.id, date: currentDate)
+        } catch {
+            showError(error)
+        }
+        
     }
     
     private func uncompleteTracker(_ tracker: Tracker) {
-        completedTrackers.removeAll{
-            $0.trackerID == tracker.id &&
-            Calendar.current.isDate(
-                $0.date,
-                inSameDayAs: currentDate
-            )
+        do {
+            try trackerRecordStore.deleteRecord(trackerID: tracker.id, date: currentDate)
+        } catch {
+            showError(error)
         }
     }
     
@@ -286,7 +328,12 @@ final class TrackersViewController: UIViewController {
     }
     
     private func completedCount(for tracker: Tracker) -> Int {
-        completedTrackers.filter { $0.trackerID == tracker.id }.count
+        do {
+            return try trackerRecordStore.completedCount(trackerID: tracker.id)
+        } catch {
+            showError(error)
+            return 0
+        }
     }
 }
 
@@ -320,13 +367,6 @@ extension TrackersViewController: UICollectionViewDataSource {
                 self.uncompleteTracker(tracker)
             } else {
                 self.completeTracker(tracker)
-            }
-            
-            let newCompleted = self.isTrackerCompleted(trackerID: tracker.id, date: currentDate)
-            let newCount = completedCount(for: tracker)
-            
-            if let cell = self.collectionView.cellForItem(at: indexPath) as? TrackersCollectionViewCell {
-                cell.updateCompletionState(isCompleted: newCompleted, completedDays: newCount)
             }
         }
         
@@ -392,6 +432,27 @@ extension TrackersViewController: UISearchResultsUpdating {
 extension TrackersViewController: UISearchControllerDelegate {
     func willDismissSearchController(_ searchController: UISearchController) {
         searchText = ""
+        updateUI()
+    }
+}
+
+//MARK: - TrackerStoreDelegate
+extension TrackersViewController: TrackerStoreDelegate {
+    func didUpdateTrackers() {
+        reloadCategories()
+    }
+}
+
+//MARK: - TrackerCategoryStoreDelegate
+extension TrackersViewController: TrackerCategoryStoreDelegate {
+    func didUpdateCategories() {
+        reloadCategories()
+    }
+}
+
+//MARK: - TrackerRecordStoreDelegate
+extension TrackersViewController: TrackerRecordStoreDelegate {
+    func didUpdateRecords() {
         updateUI()
     }
 }

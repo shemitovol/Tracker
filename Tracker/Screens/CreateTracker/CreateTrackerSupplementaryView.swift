@@ -1,8 +1,8 @@
 import UIKit
 
-final class TrackersSupplementaryView: UICollectionReusableView {
+final class CreateTrackerSupplementaryView: UICollectionReusableView {
     //MARK: - Public Properties
-    static let headerIdentifier = "header"
+    static let headerIdentifier = "сreateTrackerHeader"
     
     //MARK: - UI Elements
     private let titleLabel = UILabel()
@@ -17,7 +17,8 @@ final class TrackersSupplementaryView: UICollectionReusableView {
         titleLabel.textColor = UIColor(resource: .ypBlackDay)
         
         NSLayoutConstraint.activate ([
-            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12)
+            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 28),
+            titleLabel.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
     }
     
