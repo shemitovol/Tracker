@@ -19,7 +19,11 @@ final class TrackerStore: NSObject {
         )
         
         frc.delegate = self
-        try? frc.performFetch()
+        do {
+            try frc.performFetch()
+        } catch {
+            print("TrackerStore fetch error: \(error)")
+        }
         return frc
     }()
     
