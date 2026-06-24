@@ -2,7 +2,7 @@ import UIKit
 
 final class CreateTrackerViewController: UIViewController {
     //MARK: - Public Properties
-    var onTrackerCreated: ((Tracker) -> Void)?
+    var onTrackerCreated: ((Tracker, TrackerCategory) -> Void)?
     
     //MARK: - UI Elements
     private let titleLabel = UILabel()
@@ -20,11 +20,13 @@ final class CreateTrackerViewController: UIViewController {
     ]
     
     //MARK: - Private Properties
+    private let categoryStore: TrackerCategoryStore
     private var trackerName = ""
     private var isNameWarningShow = false
     private var selectedSchedule: [WeekDay] = []
     private var selectedEmojiIndex: Int?
     private var selectedColorIndex: Int?
+    private var selectedCategory: TrackerCategory?
     
     //MARK: - Initialization
     override func viewDidLoad() {
@@ -34,6 +36,15 @@ final class CreateTrackerViewController: UIViewController {
         setupViews()
         updateCreateButton()
         view.backgroundColor = UIColor(resource: .ypWhiteDay)
+    }
+    
+    init(categoryStore: TrackerCategoryStore) {
+        self.categoryStore = categoryStore
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError()
     }
     
     //MARK: - Private Methods
@@ -132,7 +143,8 @@ final class CreateTrackerViewController: UIViewController {
             !trackerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             !selectedSchedule.isEmpty,
             let selectedEmojiIndex,
-            let selectedColorIndex
+            let selectedColorIndex,
+            let selectedCategory
         else { return }
         
         let tracker = Tracker(
@@ -143,7 +155,7 @@ final class CreateTrackerViewController: UIViewController {
             schedule: selectedSchedule
         )
                 
-        onTrackerCreated?(tracker)
+        onTrackerCreated?(tracker, selectedCategory)
         dismiss(animated: true)
     }
     
@@ -152,14 +164,30 @@ final class CreateTrackerViewController: UIViewController {
             !selectedSchedule.isEmpty &&
             !trackerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
             selectedEmojiIndex != nil &&
-            selectedColorIndex != nil
+            selectedColorIndex != nil &&
+            selectedCategory != nil
         
         createButton.isEnabled = isEnabled
         createButton.backgroundColor = isEnabled ? UIColor(resource: .ypBlackDay) : UIColor(resource: .ypGray)
     }
     
     private func openCategory() {
-        print("openCategory")
+        let viewModel = CategoriesViewModel(
+            store: categoryStore,
+            selectedTitle: selectedCategory?.title
+        )
+
+        let vc = CategoriesViewController(
+            viewModel: viewModel
+        )
+
+        vc.onCategorySelected = { [weak self] category in
+            self?.selectedCategory = category
+            self?.collectionView.reloadData()
+            self?.updateCreateButton()
+        }
+
+        present(vc, animated: true)
     }
     
     private func openSchedule() {
@@ -272,7 +300,7 @@ extension CreateTrackerViewController: UICollectionViewDataSource {
             let value: String?
             
             if indexPath.item == 0 {
-                value = "Новая категория"
+                value = selectedCategory?.title
             } else {
                 value = selectedSchedule.isEmpty ? nil : scheduleText()
             }
