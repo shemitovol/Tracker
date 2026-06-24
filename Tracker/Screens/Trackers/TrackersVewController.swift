@@ -121,15 +121,23 @@ final class TrackersViewController: UIViewController {
     
     @objc
     private func plusTapped() {
-        let createTrackerVC = CreateTrackerViewController()
+        let createTrackerVC = CreateTrackerViewController(categoryStore: trackerCategoryStore)
         
-        createTrackerVC.onTrackerCreated = { [weak self] tracker in
+        createTrackerVC.onTrackerCreated = { [weak self] tracker, category in
             guard let self else { return }
             do {
-                let category = try self.trackerCategoryStore.addCategoryIfNeeded(title: "Новая категория")
-                try self.trackerStore.addTracker(tracker, category: category)
+                let coreDataCategory =
+                    try self.trackerCategoryStore
+                    .addCategoryIfNeeded(
+                        title: category.title
+                    )
+
+                try self.trackerStore.addTracker(
+                    tracker,
+                    category: coreDataCategory
+                )
             } catch {
-                showError(error)
+                self.showError(error)
             }
         }
         present(createTrackerVC, animated: true)

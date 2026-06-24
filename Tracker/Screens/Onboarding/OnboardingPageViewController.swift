@@ -1,11 +1,13 @@
 import UIKit
 
 final class OnboardingPageViewController: UIViewController {
-    private let page: OnboardingPage
     
+    //MARK: - Private Properties
+    private let page: OnboardingPage
     private let backgroundImageView = UIImageView()
     private let titleLabel = UILabel()
     
+    //MARK: - Initialization
     init(page: OnboardingPage) {
         self.page = page
         super.init(nibName: nil, bundle: nil)
@@ -21,6 +23,7 @@ final class OnboardingPageViewController: UIViewController {
         setupUI()
     }
     
+    //MARK: - Private Methods
     private func setupUI() {
         backgroundImageView.image = UIImage(named: page.image.name)
         backgroundImageView.contentMode = .scaleAspectFill

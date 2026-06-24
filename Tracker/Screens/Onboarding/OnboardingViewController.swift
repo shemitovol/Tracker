@@ -1,6 +1,8 @@
 import UIKit
 
 final class OnboardingViewController: UIPageViewController {
+    
+    //MARK: - Private Properties
     private let pagesData: [OnboardingPage] = [
         OnboardingPage(
             image: .background1,
@@ -47,6 +49,7 @@ final class OnboardingViewController: UIPageViewController {
         return button
     }()
     
+    //MARK: - Initialization
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -63,6 +66,7 @@ final class OnboardingViewController: UIPageViewController {
         setupUI()
     }
     
+    //MARK: - Private Methods
     private func setupUI() {
         view.addSubview(pageControl)
         view.addSubview(actionButton)
@@ -91,6 +95,7 @@ final class OnboardingViewController: UIPageViewController {
     }
 }
 
+//MARK: - UIPageViewControllerDataSource
 extension OnboardingViewController: UIPageViewControllerDataSource {
     func pageViewController(_ pageViewController: UIPageViewController, viewControllerBefore viewController: UIViewController) -> UIViewController? {
         guard let currentIndex = pages.firstIndex(of: viewController) else {
@@ -119,6 +124,7 @@ extension OnboardingViewController: UIPageViewControllerDataSource {
     }
 }
 
+//MARK: - UIPageViewControllerDelegate
 extension OnboardingViewController: UIPageViewControllerDelegate {
     func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
         guard completed,
